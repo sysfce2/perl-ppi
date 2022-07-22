@@ -45,6 +45,9 @@ L<PPI::Statement>, L<PPI::Node> and L<PPI::Element> methods.
 =cut
 
 use strict;
+
+use version ();
+
 use PPI::Statement                 ();
 use PPI::Statement::Include::Perl6 ();
 
@@ -234,6 +237,40 @@ sub arguments {
 	}
 
 	return @args;
+}
+
+=head2 arguments
+
+Returns a hashref of features identified as enabled by the include, or undef if
+the include does not enable features.
+
+=cut
+
+sub feature_mods {
+	my ($self) = @_;
+	return if $self->type eq "require";
+
+	if ( my $perl_version = $self->version ) {
+		## tried using feature.pm, but it is impossible to install future
+		## versions of it, so e.g. a 5.20 install cannot know about
+		## 5.36 features
+
+		# crude proof of concept hack due to above
+		return { signatures => 1 } if version::parse($perl_version) >= 5.035;
+	}
+
+	my %known = ( signatures => 1 );
+
+	if ( $self->module eq "feature" ) {
+		my @features = grep $known{$_},
+		  map +( $_->can("literal") || $_->can("string") || die "???" )->($_),
+		  map $_->isa("PPI::Structure::List") ? $_->children : $_,
+		  $self->arguments;
+		my $on_or_off = $self->type eq "use" ? 1 : 0;
+		return { map +( $_ => $on_or_off ), @features } if @features;
+	}
+
+	return;
 }
 
 1;

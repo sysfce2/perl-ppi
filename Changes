@@ -1,6 +1,16 @@
 Revision history for Perl extension PPI
 
 {{$NEXT}}
+	Summary:
+	- Implement support for signatures and other parsing features
+
+	Details:
+	- Framework for recognition of parsing feature activation via:
+	  - `use $PERL_VERSION` in code
+	  - `use feature` in code
+	  - PPI::Document->new( feature_mods => ... )
+	- Added ability to parse features:
+	  - signatures, as PPI::Token::Signature
 
 1.277   2023-09-22 09:12:48Z
 	Summary:
