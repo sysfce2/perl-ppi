@@ -2,7 +2,7 @@
 
 use lib 't/lib';
 use PPI::Test::pragmas;
-use Test::More tests => 6 + ( $ENV{AUTHOR_TESTING} ? 1 : 0 );
+use Test::More tests => 8 + ( $ENV{AUTHOR_TESTING} ? 1 : 0 );
 
 use B 'perlstring';
 
@@ -170,6 +170,77 @@ END_PERL
 		'PPI::Token::Structure'     => '}',
 	  ],
 	  "core try";
+}
+
+HOMEBREW_ARGS: {
+	test_document
+	  [ custom_feature_includes => { strEct => { signatures => 1 } } ],
+	  <<'END_PERL',
+		use strEct;
+		sub meep(&$) {}
+		sub marp($left, $right) {}
+END_PERL
+	  [
+		'PPI::Statement::Include' => 'use strEct;',
+		'PPI::Token::Word'        => 'use',
+		'PPI::Token::Word'        => 'strEct',
+		'PPI::Token::Structure'   => ';',
+		'PPI::Statement::Sub'     => 'sub meep(&$) {}',
+		'PPI::Token::Word'        => 'sub',
+		'PPI::Token::Word'        => 'meep',
+		'PPI::Token::Signature'   => '(&$)',
+		'PPI::Structure::Block'   => '{}',
+		'PPI::Token::Structure'   => '{',
+		'PPI::Token::Structure'   => '}',
+		'PPI::Statement::Sub'     => 'sub marp($left, $right) {}',
+		'PPI::Token::Word'        => 'sub',
+		'PPI::Token::Word'        => 'marp',
+		'PPI::Token::Signature'   => '($left, $right)',
+		'PPI::Structure::Block'   => '{}',
+		'PPI::Token::Structure'   => '{',
+		'PPI::Token::Structure'   => '}',
+	  ],
+	  "simple custom boilerplate modules";
+}
+
+HOMEBREW_CB: {
+	test_document    #
+	  [
+		custom_feature_include_cb => sub {
+			my ($inc) = @_;
+			my ($arg) = $inc->arguments;
+			return ( $inc->module eq "strEct" and $arg->string eq "sigg" )
+			  ? { signatures => 1 }
+			  : ();
+		}
+	  ],
+	  <<'END_PERL',
+		use strEct "sigg";
+		sub meep(&$) {}
+		sub marp($left, $right) {}
+END_PERL
+	  [
+		'PPI::Statement::Include'   => 'use strEct "sigg";',
+		'PPI::Token::Word'          => 'use',
+		'PPI::Token::Word'          => 'strEct',
+		'PPI::Token::Quote::Double' => '"sigg"',
+		'PPI::Token::Structure'     => ';',
+		'PPI::Statement::Sub'       => 'sub meep(&$) {}',
+		'PPI::Token::Word'          => 'sub',
+		'PPI::Token::Word'          => 'meep',
+		'PPI::Token::Signature'     => '(&$)',
+		'PPI::Structure::Block'     => '{}',
+		'PPI::Token::Structure'     => '{',
+		'PPI::Token::Structure'     => '}',
+		'PPI::Statement::Sub'       => 'sub marp($left, $right) {}',
+		'PPI::Token::Word'          => 'sub',
+		'PPI::Token::Word'          => 'marp',
+		'PPI::Token::Signature'     => '($left, $right)',
+		'PPI::Structure::Block'     => '{}',
+		'PPI::Token::Structure'     => '{',
+		'PPI::Token::Structure'     => '}',
+	  ],
+	  "callback for complex custom boilerplate modules";
 }
 
 ### TODO from ppi_token_unknown.t , deduplicate

@@ -250,6 +250,9 @@ sub feature_mods {
 	my ($self) = @_;
 	return if $self->type eq "require";
 
+	if ( my $cb_features = $self->_custom_feature_include_cb->($self) )    #
+	{ return $cb_features; }
+
 	if ( my $perl_version = $self->version ) {
 		## tried using feature.pm, but it is impossible to install future
 		## versions of it, so e.g. a 5.20 install cannot know about
@@ -272,7 +275,24 @@ sub feature_mods {
 
 	return { try => 1 } if $self->module eq "Syntax::Keyword::Try";
 
+	if ( my $custom = $self->_custom_feature_includes->{ $self->module } )    #
+	{ return $custom; }
+
 	return;
+}
+
+sub _custom_feature_includes {
+	my ($self) = @_;
+	return unless                                                             #
+	  my $document = $self->document;
+	return $document->custom_feature_includes || {};
+}
+
+sub _custom_feature_include_cb {
+	my ($self) = @_;
+	return unless                                                             #
+	  my $document = $self->document;
+	return $document->custom_feature_include_cb || sub { };
 }
 
 1;
