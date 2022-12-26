@@ -259,7 +259,7 @@ sub feature_mods {
 		return { signatures => 1 } if version::parse($perl_version) >= 5.035;
 	}
 
-	my %known = ( signatures => 1 );
+	my %known = ( signatures => 1, try => 1 );
 
 	if ( $self->module eq "feature" ) {
 		my @features = grep $known{$_},
@@ -269,6 +269,8 @@ sub feature_mods {
 		my $on_or_off = $self->type eq "use" ? 1 : 0;
 		return { map +( $_ => $on_or_off ), @features } if @features;
 	}
+
+	return { try => 1 } if $self->module eq "Syntax::Keyword::Try";
 
 	return;
 }
