@@ -225,7 +225,9 @@ sub __TOKENIZER__on_char {
 		my ($closest_parented_token) = grep $_->parent, @tokens;
 		die "no parented element found" unless    #
 		  $closest_parented_token ||= $t->_document;
-		return 'Signature'
+		  $DB::single = $DB::single = 1 if
+		  $closest_parented_token->presumed_features->{signatures};
+		return 'Structure'
 		  if $closest_parented_token->presumed_features->{signatures};
 
 		# A normal subroutine declaration

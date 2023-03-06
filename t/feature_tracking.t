@@ -7,6 +7,7 @@ use Test::More tests => 8 + ( $ENV{AUTHOR_TESTING} ? 1 : 0 );
 use B 'perlstring';
 
 use PPI ();
+use PPI::Dumper;
 
 #use DB::Skip subs => [
 #	qw( PPI::Document::new  PPI::Lexer::lex_source  PPI::Lexer::new
@@ -25,24 +26,30 @@ FEATURE_TRACKING: {
 		sub marp($left, $right) {}
 END_PERL
 	  [
-		'PPI::Statement::Sub'       => 'sub meep(&$) {}',
-		'PPI::Token::Word'          => 'sub',
-		'PPI::Token::Word'          => 'meep',
-		'PPI::Token::Prototype'     => '(&$)',
-		'PPI::Structure::Block'     => '{}',
-		'PPI::Token::Structure'     => '{',
-		'PPI::Token::Structure'     => '}',
-		'PPI::Statement::Include'   => 'use 5.035;',
-		'PPI::Token::Word'          => 'use',
-		'PPI::Token::Number::Float' => '5.035',
-		'PPI::Token::Structure'     => ';',
-		'PPI::Statement::Sub'       => 'sub marp($left, $right) {}',
-		'PPI::Token::Word'          => 'sub',
-		'PPI::Token::Word'          => 'marp',
-		'PPI::Token::Signature'     => '($left, $right)', # !!!!!!!!!!!!!!!!!!!!
-		'PPI::Structure::Block'     => '{}',
-		'PPI::Token::Structure'     => '{',
-		'PPI::Token::Structure'     => '}',
+		'PPI::Statement::Sub',        'sub meep(&$) {}',
+		'PPI::Token::Word',           'sub',
+		'PPI::Token::Word',           'meep',
+		'PPI::Token::Prototype',      '(&$)',
+		'PPI::Structure::Block',      '{}',
+		'PPI::Token::Structure',      '{',
+		'PPI::Token::Structure',      '}',
+		'PPI::Statement::Include',    'use 5.035;',
+		'PPI::Token::Word',           'use',
+		'PPI::Token::Number::Float',  '5.035',
+		'PPI::Token::Structure',      ';',
+		'PPI::Statement::Sub',        'sub marp($left, $right) {}',
+		'PPI::Token::Word',           'sub',
+		'PPI::Token::Word',           'marp',
+		'PPI::Structure::List',       '($left, $right)',
+		'PPI::Token::Structure',      '(',
+		'PPI::Statement::Expression', '$left, $right',
+		'PPI::Token::Symbol',         '$left',
+		'PPI::Token::Operator',       ',',
+		'PPI::Token::Symbol',         '$right',
+		'PPI::Token::Structure',      ')',
+		'PPI::Structure::Block',      '{}',
+		'PPI::Token::Structure',      '{',
+		'PPI::Token::Structure',      '}'
 	  ],
 	  "enabling of features";
 }
@@ -55,20 +62,31 @@ DOCUMENT_FEATURES: {
 		sub marp($left, $right) {}
 END_PERL
 	  [
-		'PPI::Statement::Sub'   => 'sub meep(&$) {}',
-		'PPI::Token::Word'      => 'sub',
-		'PPI::Token::Word'      => 'meep',
-		'PPI::Token::Signature' => '(&$)',
-		'PPI::Structure::Block' => '{}',
-		'PPI::Token::Structure' => '{',
-		'PPI::Token::Structure' => '}',
-		'PPI::Statement::Sub'   => 'sub marp($left, $right) {}',
-		'PPI::Token::Word'      => 'sub',
-		'PPI::Token::Word'      => 'marp',
-		'PPI::Token::Signature' => '($left, $right)',
-		'PPI::Structure::Block' => '{}',
-		'PPI::Token::Structure' => '{',
-		'PPI::Token::Structure' => '}',
+		'PPI::Statement::Sub' =>
+		  'sub meep(&$) {}           sub marp($left, $right) {}',
+		'PPI::Token::Word',     'sub',    #
+		'PPI::Token::Word',     'meep',
+		'PPI::Structure::List', '(&$) {}            sub marp($left, $right) {}',
+		'PPI::Token::Structure', '(',
+		'PPI::Statement::Expression' =>
+		  '&$) {}         sub marp($left, $right) {}',
+		'PPI::Token::Cast',           '&',
+		'PPI::Token::Magic',          '$)',
+		'PPI::Structure::Subscript',  '{}',
+		'PPI::Token::Structure',      '{',
+		'PPI::Token::Structure',      '}',
+		'PPI::Token::Word',           'sub',
+		'PPI::Token::Word',           'marp',
+		'PPI::Structure::List',       '($left, $right)',
+		'PPI::Token::Structure',      '(',
+		'PPI::Statement::Expression', '$left, $right',
+		'PPI::Token::Symbol',         '$left',
+		'PPI::Token::Operator',       ',',
+		'PPI::Token::Symbol',         '$right',
+		'PPI::Token::Structure',      ')',
+		'PPI::Structure::Block',      '{}',
+		'PPI::Token::Structure',      '{',
+		'PPI::Token::Structure',      '}'
 	  ],
 	  "document-level default features";
 }
@@ -275,6 +293,7 @@ sub test_document {
 	my $ok = is_deeply( $tokens, $expected, main_level_line . $msg );
 	if ( !$ok ) {
 		diag ">>> $code -- $msg\n";
+		diag( PPI::Dumper->new($d)->string );
 		diag one_line_explain $tokens;
 		diag one_line_explain $expected;
 	}
