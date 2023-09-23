@@ -1,16 +1,9 @@
-use strict;
-use warnings;
+use Test2::V0;
+use strictures 2;
 
-use Test::DependentModules qw( test_modules );
-use Test::More;
+use Test::DependentModules 'test_all_dependents';
 
-my @modules = ('Perl::Critic');
+skip_all "ENV var TEST_DEPENDENTS not set" if not $ENV{TEST_DEPENDENTS};
 
-SKIP: {
-    skip '$ENV{TEST_DEPENDENTS} not set', scalar @modules
-        unless $ENV{TEST_DEPENDENTS};
-    test_modules(@modules);
-
-}
-
-done_testing();
+test_all_dependents    #
+  PPI => { exclude => qr/^(Apache2-SSI|Devel-IPerl|Padre)$/ };
